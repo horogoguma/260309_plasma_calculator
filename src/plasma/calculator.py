@@ -1,22 +1,74 @@
-"""플라즈마 관련 이론적 계산을 담당하는 클래스
+"""Plasma calculation primitives and default reactor conditions.
 
-스파이스로부터 얻어온 전력/전류를 입력으로 받아
-임피던스, 플로우, 기타 필요한 변수들을 계산한다.
+This module stores the baseline constants and chamber conditions taken from
+the Excel reference sheet. Values are normalized to SI units so the plasma
+and SPICE layers can share the same inputs without repeated unit conversion.
 """
 
-class PlasmaCalculator:
-    def __init__(self, gas='argon', pressure_torr=8):
-        self.gas = gas
-        self.pressure_torr = pressure_torr
+from dataclasses import dataclass, field
+from math import pi
 
-    def compute_impedance(self, voltage, current):
-        """단순히 임피던스를 계산한다: Z = V / I"""
+
+TORR_TO_PA = 133.32236842105263
+MM_TO_M = 1e-3
+
+
+@dataclass(frozen=True)
+class BasicConstants:
+    """Physical constants used by the plasma model."""
+
+    boltzmann_constant: float = 1.38065e-23
+    vacuum_permittivity: float = 8.85e-12
+    electron_charge: float = 1.6e-19
+    electron_mass: float = 9.1095e-31
+    argon_mass: float = 6.6335e-26
+    excitation_energy_ev: float = 12.14
+    ionization_energy_ev: float = 15.76
+
+
+@dataclass(frozen=True)
+class ChamberConditions:
+    """Default chamber geometry and operating point."""
+
+    chamber_height_m: float = 5.679328897 * MM_TO_M
+    chamber_radius_m: float = 238.438997 * MM_TO_M
+    pressure_torr: float = 3.5
+    temperature_k: float = 423.0
+
+    @property
+    def chamber_height_mm(self) -> float:
+        return self.chamber_height_m / MM_TO_M
+
+    @property
+    def chamber_radius_mm(self) -> float:
+        return self.chamber_radius_m / MM_TO_M
+
+    @property
+    def chamber_volume_m3(self) -> float:
+        return pi * (self.chamber_radius_m ** 2) * self.chamber_height_m
+
+    @property
+    def pressure_pa(self) -> float:
+        return self.pressure_torr * TORR_TO_PA
+
+
+@dataclass
+class PlasmaCalculator:
+    """Container for plasma-side calculations."""
+
+    gas: str = "argon"
+    constants: BasicConstants = field(default_factory=BasicConstants)
+    chamber: ChamberConditions = field(default_factory=ChamberConditions)
+
+    def compute_impedance(self, voltage: complex, current: complex) -> complex:
+        """Return impedance from voltage and current."""
         if current == 0:
-            raise ValueError("전류가 0입니다.")
+            raise ValueError("Current must be non-zero.")
         return voltage / current
 
-    def compute_power_density(self, power, volume):
-        """전력과 부피를 이용해 전력 밀도를 계산한다."""
-        return power / volume
-
-    # 여기서 복잡한 피드백 계산을 추가해 나갈 수 있다.
+    def compute_power_density(self, power: float, volume: float | None = None) -> float:
+        """Return power density using the supplied or default chamber volume."""
+        effective_volume = volume if volume is not None else self.chamber.chamber_volume_m3
+        if effective_volume == 0:
+            raise ValueError("Volume must be non-zero.")
+        return power / effective_volume

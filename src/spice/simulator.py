@@ -12,7 +12,7 @@ import math
 # Base.py를 import 하면 환경변수가 셋업된다
 # (PySpice가 동작하는 데 필요한 ngspice 경로 설정)
 # 패키지 맥락에서 상대 경로로 임포트
-from .. import Base
+from ...example import Base
 
 import PySpice.Logging.Logging as Logging
 from PySpice.Spice.Netlist import Circuit
