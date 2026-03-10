@@ -5,14 +5,10 @@
 나중에 GUI나 플라즈마 계산 쪽에서 이 객체를 호출하게 된다.
 """
 
-from pathlib import Path
-import numpy as np
-import math
-
 # Base.py를 import 하면 환경변수가 셋업된다
 # (PySpice가 동작하는 데 필요한 ngspice 경로 설정)
-# 패키지 맥락에서 상대 경로로 임포트
-from ...example import Base
+# 현재 패키지 구조에서는 src.Base를 불러오면 된다.
+from .. import Base  # noqa: F401
 
 import PySpice.Logging.Logging as Logging
 from PySpice.Spice.Netlist import Circuit
