@@ -25,6 +25,9 @@ class BasicConstants:
     excitation_energy_ev: float = 12.14
     ionization_energy_ev: float = 15.76
 
+# @dataclass는 데이터 담는 클래스를 짧고 편하게 해준다.
+# @dataclass => __init__, __repr__, __eq__ 등등의 메서드를 자동으로 만들어준다.
+# frozen=True => 객체가 불변이 되도록 해준다. 즉, 객체가 생성된 후에는 속성 값을 변경할 수 없다.
 
 @dataclass(frozen=True)
 class ChamberConditions:
@@ -35,7 +38,10 @@ class ChamberConditions:
     pressure_torr: float = 3.5
     temperature_k: float = 423.0
 
-    @property
+# @property는 method를 property처럼 표현하게 해준다 
+# ex) obj.value() -> obj.value
+
+    @property   
     def chamber_height_mm(self) -> float:
         return self.chamber_height_m / MM_TO_M
 
