@@ -5,7 +5,7 @@ the Excel reference sheet. Values are normalized to SI units so the plasma
 and SPICE layers can share the same inputs without repeated unit conversion.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from math import pi
 
 
@@ -58,13 +58,18 @@ class ChamberConditions:
         return self.pressure_torr * TORR_TO_PA
 
 
-@dataclass
 class PlasmaCalculator:
     """Container for plasma-side calculations."""
 
-    gas: str = "argon"
-    constants: BasicConstants = field(default_factory=BasicConstants)
-    chamber: ChamberConditions = field(default_factory=ChamberConditions)
+    def __init__(
+        self,
+        gas: str = "argon",
+        constants: BasicConstants | None = None,
+        chamber: ChamberConditions | None = None,
+    ) -> None:
+        self.gas = gas
+        self.constants = constants if constants is not None else BasicConstants()
+        self.chamber = chamber if chamber is not None else ChamberConditions()
 
     def compute_impedance(self, voltage: complex, current: complex) -> complex:
         """Return impedance from voltage and current."""
@@ -78,3 +83,10 @@ class PlasmaCalculator:
         if effective_volume == 0:
             raise ValueError("Volume must be non-zero.")
         return power / effective_volume
+    
+    def compute_ion_mean_free_path(self, chamber.pressure_torr: float) -> float:
+        """Return ion mean free path based on electron density."""
+        if chamber.pressure_torr == 0:
+            raise ValueError("chamber press must be non-zero.")
+        return (
+            1*(chamber.pressure_torr)/330)
